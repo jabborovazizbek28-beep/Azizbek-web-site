@@ -1,4 +1,4 @@
-const TOKEN = "BOT_TOKENINGNI_SHU_YERGA_YOZ"; 
+const TOKEN = "8562511684:AAH2Xg12IOEPYO27GrZz_sAQ8OmqP5YXf7g"; 
 const CHAT_ID = "-1003616289583";
 
 const startBtn = document.getElementById('startBtn');
